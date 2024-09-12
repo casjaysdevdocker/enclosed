@@ -85,6 +85,6 @@ unset data
 [ -d "/app" ] && mv -f "/app" "/usr/share/enclosed"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set the exit code
-exitCode=o
+exitCode=0
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 exit $exitCode
