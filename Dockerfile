@@ -14,17 +14,17 @@ ARG DEFAULT_TEMPLATE_DIR="/usr/local/share/template-files/defaults"
 ARG USER="root"
 ARG SHELL_OPTS="set -e -o pipefail"
 
-ARG SERVICE_PORT=""
+ARG SERVICE_PORT="80"
 ARG EXPOSE_PORTS=""
 ARG PHP_VERSION="system"
 ARG NODE_VERSION="system"
 ARG NODE_MANAGER="system"
 
-ARG IMAGE_REPO="casjaysdev/alpine"
+ARG IMAGE_REPO="casjaysdevdocker/enclosed"
 ARG IMAGE_VERSION="latest"
 ARG CONTAINER_VERSION="USE_DATE"
 
-ARG PULL_URL="alpine"
+ARG PULL_URL="corentinth/enclosed"
 ARG DISTRO_VERSION="${IMAGE_VERSION}"
 ARG BUILD_VERSION="${BUILD_DATE}"
 
