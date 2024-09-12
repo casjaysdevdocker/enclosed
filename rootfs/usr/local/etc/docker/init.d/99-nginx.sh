@@ -223,9 +223,6 @@ __update_conf_files() {
   # define actions
   [ -f "$LOG_DIR/error.log" ] || touch "$LOG_DIR/error.log"
   [ -f "$LOG_DIR/access.log" ] || touch "$LOG_DIR/access.log"
-  [ -d "$WWW_ROOT_DIR/.well-known" ] || mkdir -p "$WWW_ROOT_DIR/.well-known"
-  mkdir -p "$ETC_DIR/conf.d" "$ETC_DIR/sites-enabled" "$ETC_DIR/sites-available" "$ETC_DIR/streams-enabled" "$ETC_DIR/streams-available"
-  mkdir -p "$CONF_DIR/conf.d" "$CONF_DIR/sites-enabled" "$CONF_DIR/sites-available" "$CONF_DIR/streams-enabled" "$CONF_DIR/streams-available"
   # exit function
   return $exitCode
 }
