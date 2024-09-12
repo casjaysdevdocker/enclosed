@@ -19,8 +19,8 @@ jobs:
       - name: Get Meta
         id: meta
         env:
-          ORG: casjaysdev
-          TAG: ${{ vars.DOCKER_TAG }}
+          ORG: casjaysdevdocker
+          TAG: latest
           HUB: docker.io
         run: |
           echo DATE_TAG=$(date +'%y%m') >> $GITHUB_OUTPUT
