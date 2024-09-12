@@ -81,7 +81,6 @@ fi
 unset data
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Main script
-[ -d "/etc/nginx" ] && rm -Rf /etc/nginx/*
 [ -d "/usr/share/enclosed" ] && rm -Rf "/usr/share/enclosed"
 [ -d "/app" ] && mv -f "/app" "/usr/share/enclosed"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
