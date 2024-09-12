@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
-# Docker image for enclosed using the alpine template
-ARG IMAGE_NAME="enclosed"
-ARG PHP_SERVER="enclosed"
-ARG BUILD_DATE="202409121723"
+# Docker image for alpine using the alpine template
+ARG IMAGE_NAME="alpine"
+ARG PHP_SERVER="alpine"
+ARG BUILD_DATE="202408111050"
 ARG LANGUAGE="en_US.UTF-8"
 ARG TIMEZONE="America/New_York"
 ARG WWW_ROOT_DIR="/usr/share/httpd/default"
@@ -14,17 +14,17 @@ ARG DEFAULT_TEMPLATE_DIR="/usr/local/share/template-files/defaults"
 ARG USER="root"
 ARG SHELL_OPTS="set -e -o pipefail"
 
-ARG SERVICE_PORT="80"
+ARG SERVICE_PORT=""
 ARG EXPOSE_PORTS=""
 ARG PHP_VERSION="system"
 ARG NODE_VERSION="system"
 ARG NODE_MANAGER="system"
 
-ARG IMAGE_REPO="casjaysdevdocker/enclosed"
+ARG IMAGE_REPO="casjaysdev/alpine"
 ARG IMAGE_VERSION="latest"
-ARG CONTAINER_VERSION=""
+ARG CONTAINER_VERSION="USE_DATE"
 
-ARG PULL_URL="corentinth/enclosed"
+ARG PULL_URL="alpine"
 ARG DISTRO_VERSION="${IMAGE_VERSION}"
 ARG BUILD_VERSION="${BUILD_DATE}"
 
@@ -61,7 +61,7 @@ ENV TZ="${TIMEZONE}"
 ENV TIMEZONE="${TZ}"
 ENV LANG="${LANGUAGE}"
 ENV TERM="xterm-256color"
-ENV HOSTNAME="casjaysdevdocker-enclosed"
+ENV HOSTNAME="casjaysdevdocker-alpine"
 
 USER ${USER}
 WORKDIR /root
@@ -70,7 +70,13 @@ COPY ./rootfs/usr/local/bin/. /usr/local/bin/
 
 RUN set -e; \
   echo "Setting up prerequisites"; \
-  true
+  apk --no-cache add bash; \
+  SH_CMD="$(which sh 2>/dev/null||command -v sh 2>/dev/null)"; \
+  BASH_CMD="$(which bash 2>/dev/null||command -v bash 2>/dev/null)"; \
+  [ -x "$BASH_CMD" ] && symlink "$BASH_CMD" "/bin/sh" || true; \
+  [ -x "$BASH_CMD" ] && symlink "$BASH_CMD" "/usr/bin/sh" || true; \
+  [ -x "$BASH_CMD" ] && [ "$SH_CMD" != "/bin/sh"] && symlink "$BASH_CMD" "$SH_CMD" || true; \
+  [ -n "$BASH_CMD" ] && sed -i 's|root:x:.*|root:x:0:0:root:/root:'$BASH_CMD'|g' "/etc/passwd" || true
 
 ENV SHELL="/bin/bash"
 SHELL [ "/bin/bash", "-c" ]
@@ -85,8 +91,11 @@ RUN echo "Initializing the system"; \
 
 RUN echo "Creating and editing system files "; \
   $SHELL_OPTS; \
-  [ -f "/root/.profile" ] || touch "/root/.profile"; \
-  mkdir -p "${DEFAULT_DATA_DIR}" "${DEFAULT_CONF_DIR}" "${DEFAULT_TEMPLATE_DIR}" "/root/docker/setup" "/etc/profile.d"; \
+  rm -Rf "/etc/apk/repositories"; \
+  [ "$DISTRO_VERSION" = "latest" ] && DISTRO_VERSION="edge";[ "$DISTRO_VERSION" = "edge" ] || DISTRO_VERSION="v${DISTRO_VERSION}"; \
+  echo "http://dl-cdn.alpinelinux.org/alpine/${DISTRO_VERSION}/main" >>"/etc/apk/repositories"; \
+  echo "http://dl-cdn.alpinelinux.org/alpine/${DISTRO_VERSION}/community" >>"/etc/apk/repositories"; \
+  if [ "${DISTRO_VERSION}" = "edge" ]; then echo "http://dl-cdn.alpinelinux.org/alpine/${DISTRO_VERSION}/testing" >>"/etc/apk/repositories";fi; \
   if [ -f "/root/docker/setup/01-system.sh" ];then echo "Running the system script";/root/docker/setup/01-system.sh||{ echo "Failed to execute /root/docker/setup/01-system.sh" >&2 && exit 10; };echo "Done running the system script";fi; \
   echo ""
 
@@ -124,7 +133,7 @@ RUN echo "Updating system files "; \
   [ -n "$PHP_FPM" ] && [ -z "$(command -v php-fpm 2>/dev/null)" ] && ln -sf "$PHP_FPM" "/usr/bin/php-fpm" 2>/dev/null || true; \
   if [ -f "/etc/profile.d/color_prompt.sh.disabled" ]; then mv -f "/etc/profile.d/color_prompt.sh.disabled" "/etc/profile.d/color_prompt.sh";fi ; \
   { [ -f "/etc/bash/bashrc" ] && cp -Rf "/etc/bash/bashrc" "/root/.bashrc"; } || { [ -f "/etc/bashrc" ] && cp -Rf "/etc/bashrc" "/root/.bashrc"; } || { [ -f "/etc/bash.bashrc" ] && cp -Rf "/etc/bash.bashrc" "/root/.bashrc"; } || true; \
-  if [ -z "$(command -v "apt-get" 2>/dev/null)" ];then grep -sh -q 'alias quit' "/root/.bashrc" || printf '# Profile\n\n%s\n%s\n%s\n' '. /etc/profile' '. /root/.profile' "alias quit='exit 0 2>/dev/null'" >>"/root/.bashrc"; fi; \
+  if [ -z "$(command -v "apt-get" 2>/dev/null)" ];then grep -s -q 'alias quit' "/root/.bashrc" || printf '# Profile\n\n%s\n%s\n%s\n' '. /etc/profile' '. /root/.profile' "alias quit='exit 0 2>/dev/null'" >>"/root/.bashrc"; fi; \
   if [ "$PHP_VERSION" != "system" ] && [ -e "/etc/php" ] && [ -d "/etc/${PHP_VERSION}" ];then rm -Rf "/etc/php";fi; \
   if [ "$PHP_VERSION" != "system" ] && [ -n "${PHP_VERSION}" ] && [ -d "/etc/${PHP_VERSION}" ];then ln -sf "/etc/${PHP_VERSION}" "/etc/php";fi; \
   if [ -f "/root/docker/setup/03-files.sh" ];then echo "Running the files script";/root/docker/setup/03-files.sh||{ echo "Failed to execute /root/docker/setup/03-files.sh" >&2 && exit 10; };echo "Done running the files script";fi; \
@@ -132,7 +141,7 @@ RUN echo "Updating system files "; \
 
 RUN echo "Custom Settings"; \
   $SHELL_OPTS; \
-echo ""
+  echo ""
 
 RUN echo "Setting up users and scripts "; \
   $SHELL_OPTS; \
@@ -149,7 +158,7 @@ RUN echo "Setting OS Settings "; \
 
 RUN echo "Custom Applications"; \
   $SHELL_OPTS; \
-echo ""
+  echo ""
 
 RUN echo "Running custom commands"; \
   if [ -f "/root/docker/setup/05-custom.sh" ];then echo "Running the custom script";/root/docker/setup/05-custom.sh||{ echo "Failed to execute /root/docker/setup/05-custom.sh" && exit 10; };echo "Done running the custom script";fi; \
@@ -199,7 +208,7 @@ ARG NODE_MANAGER
 ARG PHP_VERSION
 ARG PHP_SERVER
 ARG LICENSE="WTFPL"
-ARG ENV_PORTS="${EXPOSE_PORTS}"
+ARG ENV_PORTS=""
 
 USER ${USER}
 WORKDIR /root
@@ -214,12 +223,12 @@ LABEL org.opencontainers.image.license="${LICENSE}"
 LABEL org.opencontainers.image.build-date="${BUILD_DATE}"
 LABEL org.opencontainers.image.version="${BUILD_VERSION}"
 LABEL org.opencontainers.image.schema-version="${BUILD_VERSION}"
-LABEL org.opencontainers.image.url="https://hub.docker.com/r/casjaysdevdocker/enclosed"
-LABEL org.opencontainers.image.url.source="https://hub.docker.com/r/casjaysdevdocker/enclosed"
+LABEL org.opencontainers.image.url="https://hub.docker.com/r/casjaysdev/alpine"
+LABEL org.opencontainers.image.url.source="https://hub.docker.com/r/casjaysdev/alpine"
 LABEL org.opencontainers.image.vcs-type="Git"
 LABEL org.opencontainers.image.vcs-ref="${BUILD_VERSION}"
-LABEL org.opencontainers.image.vcs-url="https://github.com/casjaysdevdocker/enclosed"
-LABEL org.opencontainers.image.documentation="https://github.com/casjaysdevdocker/enclosed"
+LABEL org.opencontainers.image.vcs-url="https://github.com/casjaysdev/alpine"
+LABEL org.opencontainers.image.documentation="https://github.com/casjaysdev/alpine"
 LABEL com.github.containers.toolbox="false"
 
 ENV ENV=~/.bashrc
