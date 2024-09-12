@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-##@Version           :  202409121710-git
+##@Version           :  202409121830-git
 # @@Author           :  Jason Hempstead
 # @@Contact          :  jason@casjaysdev.pro
-# @@License          :  WTFPL
-# @@ReadME           :  00-node.sh --help
+# @@License          :  LICENSE.md
+# @@ReadME           :  00-enclosed.sh --help
 # @@Copyright        :  Copyright: (c) 2024 Jason Hempstead, Casjays Developments
-# @@Created          :  Thursday, Sep 12, 2024 17:10 EDT
-# @@File             :  00-node.sh
+# @@Created          :  Thursday, Sep 12, 2024 18:30 EDT
+# @@File             :  00-enclosed.sh
 # @@Description      :
 # @@Changelog        :  New script
 # @@TODO             :  Better documentation
@@ -35,7 +35,7 @@ trap 'retVal=$?;[ "$SERVICE_IS_RUNNING" != "yes" ] && [ -f "$SERVICE_PID_FILE" ]
 export PATH="/usr/local/etc/docker/bin:/usr/local/bin:/usr/bin:/usr/sbin:/bin:/sbin"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SCRIPT_FILE="$0"
-SERVICE_NAME="node"
+SERVICE_NAME="enclosed"
 SCRIPT_NAME="$(basename "$SCRIPT_FILE" 2>/dev/null)"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # exit if __start_init_scripts function hasn't been Initialized
@@ -70,7 +70,7 @@ RESET_ENV="no"
 DATABASE_BASE_DIR="${DATABASE_BASE_DIR:-/data/db}"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set the database sub directory [sqlite,postgres,mysql,mariadb,redis,couchdb,mongodb,$APPNAME]
-DATABASE_SUBDIR="node"
+DATABASE_SUBDIR="enclosed"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # set the database directory - set by the above variables
 DATABASE_DIR="$DATABASE_BASE_DIR/$DATABASE_SUBDIR"
@@ -79,31 +79,31 @@ DATABASE_DIR="$DATABASE_BASE_DIR/$DATABASE_SUBDIR"
 WWW_ROOT_DIR="/usr/share/httpd/default"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Default predefined variables
-DATA_DIR="/data/node"   # set data directory
-CONF_DIR="/config/node" # set config directory
+DATA_DIR="/data/enclosed"   # set data directory
+CONF_DIR="/config/enclosed" # set config directory
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # set the containers etc directory
-ETC_DIR="/etc/node"
+ETC_DIR="/etc/enclosed"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # set the var dir
 VAR_DIR=""
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TMP_DIR="/tmp/node"       # set the temp dir
-RUN_DIR="/run/node"       # set scripts pid dir
-LOG_DIR="/data/logs/node" # set log directory
+TMP_DIR="/tmp/enclosed"       # set the temp dir
+RUN_DIR="/run/enclosed"       # set scripts pid dir
+LOG_DIR="/data/logs/enclosed" # set log directory
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set the working dir
 WORK_DIR="/usr/share/enclosed"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # port which service is listening on
-SERVICE_PORT="80"
+SERVICE_PORT="8000"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # User to use to launch service - IE: postgres
 RUNAS_USER="root" # normally root
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # User and group in which the service switches to - IE: nginx,apache,mysql,postgres
-#SERVICE_USER="node"  # execute command as another user
-#SERVICE_GROUP="node" # Set the service group
+SERVICE_USER="nginx"  # execute command as another user
+SERVICE_GROUP="nginx" # Set the service group
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set password length
 RANDOM_PASS_USER=""
@@ -114,7 +114,7 @@ SERVICE_UID="0" # set the user id
 SERVICE_GID="0" # set the group id
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # execute command variables - keep single quotes variables will be expanded later
-EXEC_CMD_BIN='node'       # command to execute
+EXEC_CMD_BIN='enclosed'   # command to execute
 EXEC_CMD_ARGS='index.cjs' # command arguments
 EXEC_PRE_SCRIPT=''        # execute script before
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -122,7 +122,7 @@ EXEC_PRE_SCRIPT=''        # execute script before
 IS_WEB_SERVER="no"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Is this service a database server
-IS_DATABASE_SERVICE="yes"
+IS_DATABASE_SERVICE="no"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Does this service use a database server
 USES_DATABASE_SERVICE="no"
@@ -145,22 +145,30 @@ ROOT_FILE_PREFIX="/config/secure/auth/root" # directory to save username/passwor
 USER_FILE_PREFIX="/config/secure/auth/user" # directory to save username/password for normal user
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # root/admin user info password/random]
-root_user_name="${NODE_ROOT_USER_NAME:-}" # root user name
-root_user_pass="${NODE_ROOT_PASS_WORD:-}" # root user password
+root_user_name="${ENCLOSED_ROOT_USER_NAME:-}" # root user name
+root_user_pass="${ENCLOSED_ROOT_PASS_WORD:-}" # root user password
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Normal user info [password/random]
-user_name="${NODE_USER_NAME:-}"      # normal user name
-user_pass="${NODE_USER_PASS_WORD:-}" # normal user password
+user_name="${ENCLOSED_USER_NAME:-}"      # normal user name
+user_pass="${ENCLOSED_USER_PASS_WORD:-}" # normal user password
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Load variables from config
-[ -f "/config/env/node.script.sh" ] && . "/config/env/node.script.sh" # Generated by my dockermgr script
-[ -f "/config/env/node.sh" ] && . "/config/env/node.sh"               # Overwrite the variabes
+[ -f "/config/env/enclosed.script.sh" ] && . "/config/env/enclosed.script.sh" # Generated by my dockermgr script
+[ -f "/config/env/enclosed.sh" ] && . "/config/env/enclosed.sh"               # Overwrite the variabes
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Additional predefined variables
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Additional variables
-
+export PORT=${SERVICE_PORT}
+export SERVER_API_ROUTES_TIMEOUT_MS=10000
+export SERVER_CORS_ORIGINS='*'
+export NOTES_MAX_ENCRYPTED_PAYLOAD_LENGTH=5242880
+export TASK_DELETE_EXPIRED_NOTES_ENABLED=true
+export TASK_DELETE_EXPIRED_NOTES_CRON="*/60 * * * *"
+export TASK_DELETE_EXPIRED_NOTES_RUN_ON_STARTUP=true
+export STORAGE_DRIVER_FS_LITE_PATH=/data/enclosed
+export STORAGE_DRIVER_CLOUDFLARE_KV_BINDING=notes
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Specifiy custom directories to be created
 ADD_APPLICATION_FILES=""
@@ -176,15 +184,7 @@ ADDITIONAL_CONFIG_DIRS=""
 CMD_ENV=""
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Overwrite based on file/directory
-export PORT=${SERVICE_PORT}
-export SERVER_API_ROUTES_TIMEOUT_MS=10000
-export SERVER_CORS_ORIGINS='*'
-export NOTES_MAX_ENCRYPTED_PAYLOAD_LENGTH=5242880
-export TASK_DELETE_EXPIRED_NOTES_ENABLED=true
-export TASK_DELETE_EXPIRED_NOTES_CRON="*/60 * * * *"
-export TASK_DELETE_EXPIRED_NOTES_RUN_ON_STARTUP=true
-export STORAGE_DRIVER_FS_LITE_PATH=/data/enclosed
-export STORAGE_DRIVER_CLOUDFLARE_KV_BINDING=notes
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Per Application Variables or imports
 
@@ -245,10 +245,10 @@ __update_conf_files() {
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # custom commands
-
+  symlink "$(type -P node)" "/usr/local/bin/enclosed"
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # replace variables
-  # __replace "" "" "$CONF_DIR/node.conf"
+  # __replace "" "" "$CONF_DIR/enclosed.conf"
   # replace variables recursively
   # __find_replace "" "" "$CONF_DIR"
 
@@ -339,14 +339,14 @@ __create_service_env() {
     cat <<EOF | tee -p "/config/env/${SERVICE_NAME:-$SCRIPT_NAME}.sh" &>/dev/null
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # root/admin user info [password/random]
-#ENV_ROOT_USER_NAME="${ENV_ROOT_USER_NAME:-$NODE_ROOT_USER_NAME}"   # root user name
-#ENV_ROOT_USER_PASS="${ENV_ROOT_USER_NAME:-$NODE_ROOT_PASS_WORD}"   # root user password
+#ENV_ROOT_USER_NAME="${ENV_ROOT_USER_NAME:-$ENCLOSED_ROOT_USER_NAME}"   # root user name
+#ENV_ROOT_USER_PASS="${ENV_ROOT_USER_NAME:-$ENCLOSED_ROOT_PASS_WORD}"   # root user password
 #root_user_name="${ENV_ROOT_USER_NAME:-$root_user_name}"                              #
 #root_user_pass="${ENV_ROOT_USER_PASS:-$root_user_pass}"                              #
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #Normal user info [password/random]
-#ENV_USER_NAME="${ENV_USER_NAME:-$NODE_USER_NAME}"                  #
-#ENV_USER_PASS="${ENV_USER_PASS:-$NODE_USER_PASS_WORD}"             #
+#ENV_USER_NAME="${ENV_USER_NAME:-$ENCLOSED_USER_NAME}"                  #
+#ENV_USER_PASS="${ENV_USER_PASS:-$ENCLOSED_USER_PASS_WORD}"             #
 #user_name="${ENV_USER_NAME:-$user_name}"                                             # normal user name
 #user_pass="${ENV_USER_PASS:-$user_pass}"                                             # normal user password
 
