@@ -24,10 +24,17 @@ set -o pipefail
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set env variables
 exitCode=0
-
+node_bin="$(type -P nodejs)"
+enclosed_bin="/usr/bin/enclosed"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Predifined actions
-[ -d "/etc/nginx" ] && rm -Rf /etc/nginx/*
+if [ -d "/etc/nginx" ]: then
+  rm -Rf /etc/nginx/*
+fi
+if [ -n "$node_bin" ]; then
+  copy "$node_bin" "$enclosed_bin"
+  chmod -f 755 "$enclosed_bin"
+fi
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Main script
 

@@ -245,8 +245,7 @@ __update_conf_files() {
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # custom commands
-  copy "$(type -P node)" "/usr/local/bin/enclosed"
-  chmod -Rf 755 "/usr/local/bin/enclosed"
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # replace variables
   # __replace "" "" "$CONF_DIR/enclosed.conf"
