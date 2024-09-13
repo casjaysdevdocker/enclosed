@@ -24,7 +24,7 @@ set -o pipefail
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Set env variables
 exitCode=0
-node_bin="$(type -P nodejs)"
+node_bin="$(type -P nodejs||type -P node)"
 enclosed_bin="/usr/bin/enclosed"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Predifined actions
