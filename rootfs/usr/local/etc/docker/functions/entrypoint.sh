@@ -18,12 +18,7 @@
 # @@sudo/root        :  no
 # @@Template         :  functions/docker-entrypoint
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# shellcheck disable=SC2016
-# shellcheck disable=SC2031
-# shellcheck disable=SC2120
-# shellcheck disable=SC2155
-# shellcheck disable=SC2199
-# shellcheck disable=SC2317
+# shellcheck disable=SC1003,SC2016,SC2031,SC2120,SC2155,SC2199,SC2317
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # setup debugging - https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html
 [ -f "/config/.debug" ] && [ -z "$DEBUGGER_OPTIONS" ] && export DEBUGGER_OPTIONS="$(<"/config/.debug")" || DEBUGGER_OPTIONS="${DEBUGGER_OPTIONS:-}"
@@ -75,7 +70,7 @@ __clean_variables() {
   printf '%s' "$var" | grep -v '^$'
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-__no_exit() { [ -f "/run/no_exit.pid" ] || exec bash -c "trap 'sleep 1;rm -Rf /run/no_exit.pid;exit 0' TERM INT;(while true; do echo $$ >/run/no_exit.pid;tail -qf /data/logs/start.log 2>/dev/null||sleep 20; done) & wait"; }
+__no_exit() { [ -f "/run/no_exit.pid" ] || exec bash -c "trap 'sleep 1;rm -Rf /run/*;/tmp/*;/data/logs/start.log;exit 0' TERM INT;(while true; do echo $$ >/run/no_exit.pid;tail -qf /data/logs/start.log 2>/dev/null||sleep 20; done) & wait"; }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __trim() {
   local var="${*//;/ }"
@@ -218,7 +213,7 @@ __display_user_info() {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __init_config_etc() {
   local copy="no"
-  local name="$(find "/etc/$SERVICE_NAME" -maxdepth 0 | head -n1)"
+  local name="$(find "/etc/$SERVICE_NAME" -maxdepth 0 2>/dev/null | head -n1)"
   local etc_dir="${ETC_DIR:-/etc/$name}"
   local conf_dir="${CONF_DIR:-/config/$name}"
   __is_dir_empty "$conf_dir" && copy=yes
@@ -293,8 +288,9 @@ __init_mysql() {
   local etc_dir="${home:-/etc/${1:-mysql}}"
   local db_user="${SERVICE_USER:-mysql}"
   local conf_dir="/config/${1:-mysql}"
+  local user_name="${MARIADB_USER:-root}"
   local user_pass="${MARIADB_PASSWORD:-$MARIADB_ROOT_PASSWORD}"
-  local user_db="${MARIADB_DATABASE}" user_name="${MARIADB_USER:-root}"
+  local user_db="${MARIADB_DATABASE}"
   local root_pass="$MARIADB_ROOT_PASSWORD"
   local mysqld_bin="$(type -P 'mysqld')"
   return 0
@@ -302,22 +298,22 @@ __init_mysql() {
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __init_mongodb() {
   local home="${MONGODB_CONFIG_FILE:-$(__find_mongodb_conf)}"
-  local user_pass="${MONGO_INITDB_ROOT_PASSWORD:-$_ROOT_PASSWORD}"
   local user_name="${INITDB_ROOT_USERNAME:-root}"
+  local user_pass="${MONGO_INITDB_ROOT_PASSWORD:-$_ROOT_PASSWORD}"
   return
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __init_postgres() {
   local home="${PGSQL_CONFIG_FILE:-$(__find_pgsql_conf)}"
-  local user_pass="${POSTGRES_PASSWORD:-$POSTGRES_ROOT_PASSWORD}"
   local user_name="${POSTGRES_USER:-root}"
+  local user_pass="${POSTGRES_PASSWORD:-$POSTGRES_ROOT_PASSWORD}"
   return
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 __init_couchdb() {
   local home="${COUCHDB_CONFIG_FILE:-$(__find_couchdb_conf)}"
-  local user_pass="${COUCHDB_PASSWORD:-$SET_RANDOM_PASS}"
   local user_name="${COUCHDB_USER:-root}"
+  local user_pass="${COUCHDB_PASSWORD:-$SET_RANDOM_PASS}"
   return
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -436,6 +432,7 @@ __setup_directories() {
   APPLICATION_FILES="${APPLICATION_FILES//,/ }"
   ADD_APPLICATION_DIRS="${ADD_APPLICATION_DIRS//,/ }"
   ADD_APPLICATION_FILES="${ADD_APPLICATION_FILES//,/ }"
+  [ -n "$ENV_WWW_ROOT_DIR" ] && export WWW_ROOT_DIR="$ENV_WWW_ROOT_DIR"
   # Setup WWW_ROOT_DIR
   if [ "$IS_WEB_SERVER" = "yes" ]; then
     APPLICATION_DIRS="$APPLICATION_DIRS $WWW_ROOT_DIR"
@@ -880,8 +877,10 @@ __initialize_db_users() {
   db_normal_pass="${DATABASE_PASS_NORMAL:-$user_pass}"
   db_admin_user="${DATABASE_USER_ROOT:-$root_user_name}"
   db_admin_pass="${DATABASE_PASS_ROOT:-$root_user_pass}"
-  export DATABASE_USER="$db_normal_user" DATABASE_PASSWORD="$db_normal_pass"
-  export DATABASE_ROOT_USER="$db_admin_user" DATABASE_ROOT_PASSWORD="$db_admin_pass"
+  export DATABASE_USER_NORMAL="$db_normal_user"
+  export DATABASE_PASS_NORMAL="$db_normal_pass"
+  export DATABASE_USER_ROOT="$db_admin_user"
+  export DATABASE_PASS_ROOT="$db_admin_pass"
   export db_normal_user db_normal_pass db_admin_user db_admin_pass
 }
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1172,6 +1171,7 @@ CONTAINER_IP4_ADDRESS="${CONTAINER_IP4_ADDRESS:-$(__get_ip4)}"
 CONTAINER_IP6_ADDRESS="${CONTAINER_IP6_ADDRESS:-$(__get_ip6)}"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Additional
+export WORK_DIR="${ENV_WORK_DIR:-$WORK_DIR}"
 export SET_RANDOM_PASS="${SET_RANDOM_PASS:-$(__random_password 16)}"
 export PHP_INI_DIR="${PHP_INI_DIR:-$(__find_php_ini)}"
 export PHP_BIN_DIR="${PHP_BIN_DIR:-$(__find_php_bin)}"
@@ -1187,11 +1187,6 @@ export ENTRYPOINT_PID_FILE="${ENTRYPOINT_PID_FILE:-/run/init.d/entrypoint.pid}"
 export ENTRYPOINT_INIT_FILE="${ENTRYPOINT_INIT_FILE:-/config/.entrypoint.done}"
 export ENTRYPOINT_DATA_INIT_FILE="${ENTRYPOINT_DATA_INIT_FILE:-/data/.docker_has_run}"
 export ENTRYPOINT_CONFIG_INIT_FILE="${ENTRYPOINT_CONFIG_INIT_FILE:-/config/.docker_has_run}"
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SERVER_ADMIN_URL="/admin/$SERVICE_NAME"
-[ -d "/usr/share/mongodb" ] && MONGOADMIN_WWW_ROOT="/usr/share/mongodb"
-[ -d "/usr/share/phpmyadmin" ] && PHPMYADMIN_WWW_ROOT="/usr/share/phpmyadmin"
-[ -d "/usr/share/phppgadmin" ] && PHPPGADMIN_WWW_ROOT="/usr/share/phppgadmin"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # is already Initialized
 [ -z "$DATA_DIR_INITIALIZED" ] && { [ -f "$ENTRYPOINT_DATA_INIT_FILE" ] && DATA_DIR_INITIALIZED="true" || DATA_DIR_INITIALIZED="false"; }
