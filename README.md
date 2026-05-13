@@ -19,17 +19,18 @@ dockermgr update enclosed
 ## Install and run container
   
 ```shell
-mkdir -p "$HOME/.local/share/srv/docker/enclosed/volumes"
+dockerHome="/var/lib/srv/$USER/docker/casjaysdevdocker/enclosed/enclosed/latest/rootfs"
+mkdir -p "/var/lib/srv/$USER/docker/enclosed/rootfs"
 git clone "https://github.com/dockermgr/enclosed" "$HOME/.local/share/CasjaysDev/dockermgr/enclosed"
-cp -Rfva "$HOME/.local/share/CasjaysDev/dockermgr/enclosed/rootfs/." "$HOME/.local/share/srv/docker/enclosed/volumes/"
+cp -Rfva "$HOME/.local/share/CasjaysDev/dockermgr/enclosed/rootfs/." "$dockerHome/"
 docker run -d \
 --restart always \
 --privileged \
---name casjaysdevdocker-enclosed \
+--name casjaysdevdocker-enclosed-latest \
 --hostname enclosed \
 -e TZ=${TIMEZONE:-America/New_York} \
--v "$HOME/.local/share/srv/docker/casjaysdevdocker-enclosed/volumes/data:/data:z" \
--v "$HOME/.local/share/srv/docker/casjaysdevdocker-enclosed/volumes/config:/config:z" \
+-v "$dockerHome/data:/data:z" \
+-v "$dockerHome/config:/config:z" \
 -p 80:80 \
 casjaysdevdocker/enclosed:latest
 ```
@@ -46,8 +47,8 @@ services:
       - TZ=America/New_York
       - HOSTNAME=enclosed
     volumes:
-      - "$HOME/.local/share/srv/docker/casjaysdevdocker-enclosed/volumes/data:/data:z"
-      - "$HOME/.local/share/srv/docker/casjaysdevdocker-enclosed/volumes/config:/config:z"
+      - "/var/lib/srv/$USER/docker/casjaysdevdocker/enclosed/enclosed/latest/rootfs/data:/data:z"
+      - "/var/lib/srv/$USER/docker/casjaysdevdocker/enclosed/enclosed/latest/rootfs/config:/config:z"
     ports:
       - 80:80
     restart: always
