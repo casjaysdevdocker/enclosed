@@ -1,78 +1,78 @@
-#!/usr/bin/env bash
-# shellcheck shell=bash
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-##@Version           :  202408102055-git
+#!/usr/bin/env sh
+# shellcheck shell=sh
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+##@Version           :  202605051306-git
 # @@Author           :  Jason Hempstead
 # @@Contact          :  jason@casjaysdev.pro
-# @@License          :  LICENSE.md
+# @@License          :  WTFPL
 # @@ReadME           :  copy --help
-# @@Copyright        :  Copyright: (c) 2024 Jason Hempstead, Casjays Developments
-# @@Created          :  Saturday, Aug 10, 2024 20:55 EDT
+# @@Copyright        :  Copyright: (c) 2026 Jason Hempstead, Casjays Developments
+# @@Created          :  Tuesday, May 05, 2026 13:06 EDT
 # @@File             :  copy
 # @@Description      :  copies a file and shows progress
-# @@Changelog        :  New script
+# @@Changelog        :  Refactored for self-contained operation
 # @@TODO             :  Better documentation
 # @@Other            :
 # @@Resource         :
 # @@Terminal App     :  no
 # @@sudo/root        :  no
-# @@Template         :  shell/bash
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# shellcheck disable=SC2016
-# shellcheck disable=SC2031
-# shellcheck disable=SC2120
-# shellcheck disable=SC2155
-# shellcheck disable=SC2199
-# shellcheck disable=SC2317
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# script variables
-APPNAME="$(basename "$0" 2>/dev/null)"
-VERSION="202408102055-git"
-RUN_USER="$USER"
-SET_UID="$(id -u)"
-SCRIPT_SRC_DIR="${BASH_SOURCE%/*}"
-COPY_CWD="$(realpath "$PWD")"
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# script functions
-if [ "$SHOW_RAW" != "true" ]; then
-  __printf_color() { printf "%b" "$(tput setaf "${2:-$DEFAULT_COLOR}" 2>/dev/null)" "$1\n" "$(tput sgr0 2>/dev/null)"; }
+# @@Template         :  shell/sh
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# shellcheck disable=SC1001,SC1003,SC2001,SC2003,SC2016,SC2031,SC2090,SC2115,SC2120,SC2155,SC2199,SC2229,SC2317,SC2329
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+APPNAME="$(basename -- "$0" 2>/dev/null)"
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# colorization
+if [ -n "$NO_COLOR" ]; then
+  __printf_color() { printf '%b' "$1\n" | tr -d '\t' | sed '/^%b$/d;s,\x1B\[ 0-9;]*[a-zA-Z],,g'; }
 else
-  # Disable colorization
-  __printf_color() { printf '%b\n' "$1" | tr -d '\t' | sed '/^%b$/d;s,\x1B\[ 0-9;]*[a-zA-Z],,g'; }
+  __printf_color() { { [ -z "$2" ] || DEFAULT_COLOR=$2; } && printf "%b" "$(tput setaf "$DEFAULT_COLOR" 2>/dev/null)" "$1\n" "$(tput sgr0 2>/dev/null)"; }
 fi
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# check for command
-__cmd_exists() { which $1 >/dev/null 2>&1 || return 1; }
-__function_exists() { builtin type $1 >/dev/null 2>&1 || return 1; }
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+__unlink() { [ -L "$1" ] && rm -f -- "$1" >/dev/null; }
+# - - - - - - - - - - - - - - - - - - - - - - - - -
 # custom functions
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Define Variables
-DEFAULT_COLOR="7"
-COPY_EXIT_STATUS=0
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Main application
-{ [ $# -eq 2 ] || [ "$1" = "--help" ]; } || { __printf_color "Usage: $APPNAME fromFile toFile" && exit 1; }
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-is_link="$(ls -la "$2" 2>/dev/null | awk '{print $NF}')"
-if [ "$1" != "$is_link" ]; then
+__copy() {
+  exitCode=0
   if [ -d "$1" ]; then
+    __printf_color "Copying $1/* to $2/"
+    __unlink "$2"
     mkdir -p "$2"
-    cp -Rf "$1/." "$2/"
-    COPY_EXIT_STATUS=$?
-  elif [ -e "$1" ]; then
+    for f in "$1"/* "$1"/.[!.]* "$1"/..?*; do
+      [ -e "$f" ] || [ -L "$f" ] || continue
+      base=$(basename -- "$f")
+      __copy "$f" "$2/$base" || exitCode=$?
+    done
+  elif [ -f "$1" ] || [ -L "$1" ]; then
+    __printf_color "Copying $1 to $2"
+    __unlink "$2"
     cp -Rf "$1" "$2"
-    COPY_EXIT_STATUS=$?
-  else
-    COPY_EXIT_STATUS=2
+    exitCode=$?
   fi
+  return $exitCode
+}
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Define variables
+DEFAULT_COLOR="254"
+COPY_EXIT_STATUS=0
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Main application
+if [ $# -ne 2 ]; then
+  __printf_color "USAGE: $APPNAME to from" "1" >&2
+  COPY_EXIT_STATUS=1
+elif [ ! -e "$1" ]; then
+  __printf_color "$1 does not exist" >&2
+  COPY_EXIT_STATUS=2
+else
+  __printf_color "Copying $1 to $2" "4"
+  __copy "$1" "$2" >/dev/null
+  COPY_EXIT_STATUS=$?
 fi
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - -
 # End application
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - -
 # lets exit with code
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - -
 exit $COPY_EXIT_STATUS
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - -
 # ex: ts=2 sw=2 et filetype=sh
